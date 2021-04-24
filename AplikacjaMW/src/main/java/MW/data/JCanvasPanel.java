@@ -21,7 +21,7 @@ public class JCanvasPanel extends JPanel {
         g2.setColor(Color.RED);
         for (int j = 0; j < MS; j++) {
             for (int i = 0; i < MS; i++) {
-                if(dataManager.matrix[i][j] == 1)
+                if(dataManager.cellMatrix[i][j].isActive())
                     g2.fillRect(i * CS + CS, j * CS + CS, CS, CS);
             }
         }

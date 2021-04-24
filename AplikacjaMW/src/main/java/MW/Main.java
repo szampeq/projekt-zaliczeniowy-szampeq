@@ -220,9 +220,9 @@ public class Main extends JFrame {
 
                 if (isBoardCreated.get()){
                     if (SwingUtilities.isRightMouseButton(e))
-                        canvasPanel.dataManager.drawFillMatrixCell(cellX, cellY, 0);
+                        canvasPanel.dataManager.drawFillMatrixCell(cellX, cellY, false);
                     else if (SwingUtilities.isLeftMouseButton(e))
-                        canvasPanel.dataManager.drawFillMatrixCell(cellX, cellY, 1);
+                        canvasPanel.dataManager.drawFillMatrixCell(cellX, cellY, true);
                 }
 
             }

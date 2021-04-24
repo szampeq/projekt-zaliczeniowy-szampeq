@@ -1,13 +1,15 @@
 package MW.data;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DataManager {
 
     int meshSize;
     int cellSize;
-    String initialState;
-    int[][] matrix;
+    Cell[][] cellMatrix;
 
     public DataManager(){
         this.cellSize = 10;
@@ -29,50 +31,44 @@ public class DataManager {
         this.cellSize = cellSize;
     }
 
-    public String getInitialState() {
-        return initialState;
+    public Cell[][] getMatrix(){
+        return cellMatrix;
     }
 
-    public void setInitialState(String initialState) {
-        this.initialState = initialState;
-    }
-
-    public int[][] getMatrix(){
-        return matrix;
-    }
-
-    public void setMatrix(int[][] matrix){
-        this.matrix = matrix;
+    public void setMatrix(Cell[][] cellMatrix){
+        this.cellMatrix = cellMatrix;
     }
 
     public void fillMatrix() {
-        matrix = new int[meshSize][meshSize];
+        cellMatrix = new Cell[meshSize][meshSize];
         zeroMatrix();
     }
 
     public void zeroMatrix() {
         for (int i = 0; i < meshSize; i++)
-            for (int j = 0; j < meshSize; j++)
-                matrix[i][j] = 0;
+            for (int j = 0; j < meshSize; j++) {
+                cellMatrix[i][j] = new Cell(false, Color.WHITE);
+            }
     }
 
     public void changeMatrixCell(int x, int y) {
-        if (x >= 0 && x < matrix.length && y >= 0 && y < matrix[0].length)
-            if (matrix[x][y] == 0)
-                matrix[x][y] = 1;
-            else
-                matrix[x][y] = 0;
+        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length)
+            cellMatrix[x][y].isActive = !cellMatrix[x][y].isActive();
     }
 
-    public void drawFillMatrixCell(int x, int y, int value) {
-        if (x >= 0 && x < matrix.length && y >= 0 && y < matrix[0].length)
-            matrix[x][y] = value;
+    public void drawFillMatrixCell(int x, int y, boolean isActive) {
+        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length)
+            cellMatrix[x][y].isActive = isActive;
     }
 
     public void cellNeighborhood() {
 
         int neighborsAlive;
-        int[][] newCells = new int[meshSize][meshSize];
+        Cell[][] newCells = new Cell[meshSize][meshSize];
+        for (int i = 0; i < meshSize; i++)
+            for (int j = 0; j < meshSize; j++) {
+                newCells[i][j] = new Cell(false, Color.WHITE);
+            }
 
         for (int i = 0; i < meshSize; i++)
             for (int j = 0; j < meshSize; j++) {
@@ -96,24 +92,24 @@ public class DataManager {
                         if (y > meshSize - 1)
                             y -= meshSize;
 
-                        neighborsAlive += matrix[x][y];
+                        neighborsAlive += cellMatrix[x][y].isActive() ? 1 : 0;
 
                     }
 
                 // new cell is born
-                if (matrix[i][j] == 0 && neighborsAlive == 3)
-                    newCells[i][j] = 1;
+                if (!cellMatrix[i][j].isActive() && neighborsAlive == 3)
+                    newCells[i][j].isActive = true;
                     // cell in crowd dies
-                else if (matrix[i][j] == 1 && neighborsAlive > 3)
-                    newCells[i][j] = 0;
+                else if (cellMatrix[i][j].isActive() && neighborsAlive > 3)
+                    newCells[i][j].isActive = false;
                     // lonely cell dies
-                else if (matrix[i][j] == 1 && neighborsAlive < 2)
-                    newCells[i][j] = 0;
+                else if (cellMatrix[i][j].isActive() && neighborsAlive < 2)
+                    newCells[i][j].isActive = false;
                 else
-                    newCells[i][j] = matrix[i][j];
+                    newCells[i][j] = cellMatrix[i][j];
             }
 
-        matrix = newCells;
+        cellMatrix = newCells;
     }
 
 }

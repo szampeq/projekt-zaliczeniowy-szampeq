@@ -1,5 +1,6 @@
 package MW.tools;
 
+import MW.data.Cell;
 import MW.data.DataManager;
 
 import java.io.File;
@@ -15,14 +16,14 @@ public class PatternTXT {
         try
         {
             FileWriter txt = new FileWriter("src/main/resources/patterns/pattern" + numberTXT + ".txt");
-            int[][] matrix = dataManager.getMatrix();
+            Cell[][] matrix = dataManager.getMatrix();
             txt.write(dataManager.getMeshSize() + "\n");
             for (int i = 0; i < dataManager.getMeshSize(); i++) {
                 for (int j = 0; j < dataManager.getMeshSize(); j++) {
-                    if(matrix[i][j] == 0)
-                        txt.write("0");
-                    else
+                    if(matrix[i][j].isActive())
                         txt.write("1");
+                    else
+                        txt.write("0");
                 }
                 txt.write("\n");
             }
@@ -38,13 +39,13 @@ public class PatternTXT {
 
     }
 
-    public static int[][] openPattern(String path) throws FileNotFoundException {
+    public static Cell[][] openPattern(String path) throws FileNotFoundException {
 
         File file = new File(path);
         Scanner in = new Scanner(file);
         String meshSizeString = in.nextLine();
         int meshSize = Integer.parseInt(meshSizeString);
-        int[][] matrix = new int[meshSize][meshSize];
+        Cell[][] matrix = new Cell[meshSize][meshSize];
 
         for (int i = 0; i < meshSize; i++)
         {
@@ -52,7 +53,8 @@ public class PatternTXT {
             for (int j = 0; j < meshSize; j++)
             {
                 char c = words.charAt(j);
-                matrix[i][j] = Character.getNumericValue(c);
+                matrix[i][j].setActive(Character.getNumericValue(c) != 0);
+
             }
         }
 
