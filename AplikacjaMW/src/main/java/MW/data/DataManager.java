@@ -1,6 +1,8 @@
 package MW.data;
 
+import MW.enums.BCs;
 import MW.enums.Neighborhoods;
+import MW.enums.Nucleations;
 
 import java.awt.*;
 import java.util.*;
@@ -14,16 +16,38 @@ public class DataManager {
     int meshSizeX;
     int meshSizeY;
     int cellSize;
+
     Cell[][] cellMatrix;
     int[][] neighborhoodMatrix;
+
+    BCs selectedBCs;
+    Nucleations nucleations;
+
+    int nucleationRandomGrains;
+    int nucleationRadiusGrains;
+    int nucleationRadiusValue;
+    int nucleationHomogenousX;
+    int nucleationHomogenousY;
+    int neighborhoodRandomRadius;
+
     final Random r = new Random();
 
     public DataManager(){
         this.cellSize = 10;
     }
 
-    public void setup(Neighborhoods neighborhoods) {
+    public void setup(Neighborhoods neighborhoods, BCs bcs, Nucleations nucleations, int nucleationRandomGrains,
+                      int nucleationRadiusGrains, int nucleationRadiusValue, int nucleationHomogenousX,
+                      int nucleationHomogenousY, int neighborhoodRandomRadius) {
         neighborhoodMatrix = neighborhoodMatrix(neighborhoods);
+        this.selectedBCs = bcs;
+        this.nucleations = nucleations;
+        this.nucleationRandomGrains = nucleationRandomGrains;
+        this.nucleationRadiusGrains = nucleationRadiusGrains;
+        this.nucleationRadiusValue = nucleationRadiusValue;
+        this.nucleationHomogenousX = nucleationHomogenousX;
+        this.nucleationHomogenousY = nucleationHomogenousY;
+        this.neighborhoodRandomRadius = neighborhoodRandomRadius;
     }
 
     public int getMeshSizeX() {
@@ -111,14 +135,21 @@ public class DataManager {
 
                         if (x == i && y == j)
                             continue;
-                        if (x < 0)
-                            x += meshSizeX;
-                        if (y < 0)
-                            y += meshSizeY;
-                        if (x > meshSizeX - 1)
-                            x -= meshSizeX;
-                        if (y > meshSizeY - 1)
-                            y -= meshSizeY;
+                        /* BOUNDARY CONDITIONS */
+                        if (selectedBCs == BCs.PERIODIC) {
+                            if (x < 0)
+                                x += meshSizeX;
+                            if (y < 0)
+                                y += meshSizeY;
+                            if (x > meshSizeX - 1)
+                                x -= meshSizeX;
+                            if (y > meshSizeY - 1)
+                                y -= meshSizeY;
+                        } else {
+                            if (x < 0 || y < 0 || x > meshSizeX - 1 || y > meshSizeY - 1)
+                                continue;
+                        }
+
 
                         if (cellMatrix[x][y].isActive())
                             activeNeighbors.add(cellMatrix[x][y]);

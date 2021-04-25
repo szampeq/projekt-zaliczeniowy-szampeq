@@ -120,19 +120,28 @@ public class Main extends JFrame {
 
         MW.elements.Button board = new MW.elements.Button("Stwórz planszę", buttonPanel);
         board.button.addActionListener(e -> {
-            // MESH SIZE
+            // ====== MESH SIZE ======
             selectedMeshX.set((Integer) meshSizeX.comboBox.getSelectedItem());
             canvasPanel.dataManager.setMeshSizeX(selectedMeshX.intValue());
             selectedMeshY.set((Integer) meshSizeY.comboBox.getSelectedItem());
             canvasPanel.dataManager.setMeshSizeY(selectedMeshY.intValue());
 
-            // CELL SIZE
+            // ====== CALCULATE CELL SIZE ======
             int cellSize = 1000 / (Integer) meshSizeX.comboBox.getSelectedItem();
             canvasPanel.dataManager.setCellSize(cellSize);
-            // NEIGHBORHOOD
-           // System.out.println((Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem())));
-            dm.setup(Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem()));
-             //canvasPanel.dataManager.setNeighborhood(selectedNeighborhood);
+
+            // ====== SETUP ======
+            dm.setup(Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem()),
+                    BCs.valueOf((String) boundaryTypes.comboBox.getSelectedItem()),
+                    Nucleations.valueOf((String) nucleationTypes.comboBox.getSelectedItem()),
+                    (Integer) nucleationRandomGrains.comboBox.getSelectedItem(),
+                    (Integer) nucleationRadiusGrains.comboBox.getSelectedItem(),
+                    (Integer) nucleationRadiusValue.comboBox.getSelectedItem(),
+                    (Integer) nucleationHomogenousX.comboBox.getSelectedItem(),
+                    (Integer) nucleationHomogenousY.comboBox.getSelectedItem(),
+                    (Integer) radiusNeighborhood.comboBox.getSelectedItem());
+
+
             // SET MATRIX
             canvasPanel.dataManager.fillMatrix();
             isBoardCreated.set(true);
