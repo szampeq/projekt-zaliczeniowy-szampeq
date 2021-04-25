@@ -23,9 +23,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.security.cert.CertificateParsingException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -95,7 +93,7 @@ public class Main extends JFrame {
         // ================= Neighborhood ==================
 
         Label neighborhoodLabel = new Label("Sąsiedztwo:", buttonPanel);
-        ComboText neighborhoodsTypes = new ComboText(Stream.of(Neighborhoods.values()).map(Neighborhoods::name).toArray(String[]::new), buttonPanel);
+        ComboText neighborhoodTypes = new ComboText(Stream.of(Neighborhoods.values()).map(Neighborhoods::name).toArray(String[]::new), buttonPanel);
 
         // ================= Mesh & Board Options ==================
 
@@ -121,11 +119,11 @@ public class Main extends JFrame {
             selectedCellSize.set((Integer) cellSize.comboBox.getSelectedItem());
             canvasPanel.dataManager.setCellSize(selectedCellSize.intValue());
             // NEIGHBORHOOD
-             //String selectedNeighborhood = (String) neighborhoodTypes.comboBox.getSelectedItem();
+           // System.out.println((Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem())));
+            dm.setup(Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem()));
              //canvasPanel.dataManager.setNeighborhood(selectedNeighborhood);
             // SET MATRIX
             canvasPanel.dataManager.fillMatrix();
-            //golPanel.golData.generateCA();
             isBoardCreated.set(true);
             // REPAINT
             canvasPanel.repaint();
@@ -169,11 +167,16 @@ public class Main extends JFrame {
         final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         executorService.scheduleAtFixedRate(() -> {
 
-            if (isStarted.get()) {
-                canvasPanel.dataManager.cellNeighborhood();
+            try {
+                if (isStarted.get()) {
+                    canvasPanel.dataManager.cellNeighborhood();
+                }
+            } catch (Exception e) {
+                System.out.println(e);
             }
 
-        }, 0, 100, TimeUnit.MILLISECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS);
+
 
         // ========================================================
 
@@ -206,7 +209,7 @@ public class Main extends JFrame {
                 int cellY = y/ canvasPanel.dataManager.getCellSize();
 
                 if (isBoardCreated.get())
-                    canvasPanel.dataManager.changeMatrixCell(cellX, cellY);
+                    canvasPanel.dataManager.createMatrixCell(cellX, cellY);
             }
 
         });

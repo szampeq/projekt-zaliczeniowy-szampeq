@@ -3,6 +3,7 @@ package MW.data;
 import java.awt.*;
 
 public class Cell {
+    int id;
     boolean isActive;
     Color color;
 
@@ -19,6 +20,14 @@ public class Cell {
         isActive = active;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public Color getColor() {
         return color;
     }
@@ -26,4 +35,6 @@ public class Cell {
     public void setColor(Color color) {
         this.color = color;
     }
+
+
 }
