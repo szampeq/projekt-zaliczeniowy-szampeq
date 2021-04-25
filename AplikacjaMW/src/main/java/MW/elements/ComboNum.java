@@ -19,7 +19,7 @@ public class ComboNum extends JComboBox<Integer> {
         this.comboBox.setBackground(new Color(0x5555F5));
         this.comboBox.setForeground(Color.WHITE);
         this.comboBox.setFont(new Font("Mangal",Font.ITALIC,14));
-        this.comboBox.setSelectedItem(this.array[(size/2)]);
+        this.comboBox.setSelectedItem(this.array[(size/2-1)]);
         buttonPanel.add(this.comboBox);
     }
 }

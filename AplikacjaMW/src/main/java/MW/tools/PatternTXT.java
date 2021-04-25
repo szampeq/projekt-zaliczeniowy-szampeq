@@ -17,9 +17,10 @@ public class PatternTXT {
         {
             FileWriter txt = new FileWriter("src/main/resources/patterns/pattern" + numberTXT + ".txt");
             Cell[][] matrix = dataManager.getMatrix();
-            txt.write(dataManager.getMeshSize() + "\n");
-            for (int i = 0; i < dataManager.getMeshSize(); i++) {
-                for (int j = 0; j < dataManager.getMeshSize(); j++) {
+            txt.write(dataManager.getMeshSizeX() + "\n");
+            txt.write(dataManager.getMeshSizeY() + "\n");
+            for (int i = 0; i < dataManager.getMeshSizeX(); i++) {
+                for (int j = 0; j < dataManager.getMeshSizeY(); j++) {
                     if(matrix[i][j].isActive())
                         txt.write("1");
                     else
@@ -43,14 +44,16 @@ public class PatternTXT {
 
         File file = new File(path);
         Scanner in = new Scanner(file);
-        String meshSizeString = in.nextLine();
-        int meshSize = Integer.parseInt(meshSizeString);
-        Cell[][] matrix = new Cell[meshSize][meshSize];
+        String meshSizeStringX = in.nextLine();
+        String meshSizeStringY = in.nextLine();
+        int meshSizeX = Integer.parseInt(meshSizeStringX);
+        int meshSizeY = Integer.parseInt(meshSizeStringY);
+        Cell[][] matrix = new Cell[meshSizeX][meshSizeY];
 
-        for (int i = 0; i < meshSize; i++)
+        for (int i = 0; i < meshSizeX; i++)
         {
             String words = in.next();
-            for (int j = 0; j < meshSize; j++)
+            for (int j = 0; j < meshSizeY; j++)
             {
                 char c = words.charAt(j);
                 matrix[i][j].setActive(Character.getNumericValue(c) != 0);

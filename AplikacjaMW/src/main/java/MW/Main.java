@@ -55,7 +55,8 @@ public class Main extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setContentPane(mainPanel);
 
-        this.setSize(new Dimension(820, 710));
+        this.setSize(new Dimension(1920, 1080));
+        this.setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
         this.setLocationRelativeTo(null);
     }
 
@@ -68,17 +69,14 @@ public class Main extends JFrame {
 
     public void program(){
 
-        buttonPanel.setLayout(new GridLayout(19, 1));
+        buttonPanel.setLayout(new GridLayout(14, 2));
 
         // ================= Window Size ==================
 
-        Label meshLabel = new Label("Wymiary okna", buttonPanel);
-        ComboNum meshSize = new ComboNum(1, 100, buttonPanel);
-
-        // ================= Grain Size ==================
-
-        Label cellSizeLabel = new Label("Wielkość ziarna:", buttonPanel);
-        ComboNum cellSize = new ComboNum(1, 20, buttonPanel);
+        Label meshLabel1 = new Label("Długość okna", buttonPanel);
+        ComboNum meshSizeX = new ComboNum(1, 1000, buttonPanel);
+        Label meshLabel2 = new Label("Wysokość okna", buttonPanel);
+        ComboNum meshSizeY = new ComboNum(1, 1000, buttonPanel);
 
         // ================= Boundary Conditions ==================
 
@@ -89,20 +87,30 @@ public class Main extends JFrame {
 
         Label nucleationLabel = new Label("Zarodkowanie:", buttonPanel);
         ComboText nucleationTypes = new ComboText(Stream.of(Nucleations.values()).map(Nucleations::name).toArray(String[]::new), buttonPanel);
+        Label nucleationRandomGrainsLabel = new Label("Losowe - liczba ziaren:", buttonPanel);
+        ComboNum nucleationRandomGrains = new ComboNum(1, 20, buttonPanel);
+        Label nucleationRadiusGrainsLabel = new Label("Z promieniem - ziarna:", buttonPanel);
+        ComboNum nucleationRadiusGrains = new ComboNum(1, 20, buttonPanel);
+        Label nucleationRadiusValueLabel = new Label("Z promieniem - promień:", buttonPanel);
+        ComboNum nucleationRadiusValue = new ComboNum(1, 20, buttonPanel);
+        Label nucleationHomogenousXLabel = new Label("Jednorodne - ziarna po X:", buttonPanel);
+        ComboNum nucleationHomogenousX = new ComboNum(1, 20, buttonPanel);
+        Label nucleationHomogenousYLabel = new Label("Jednorodne - ziarna po Y:", buttonPanel);
+        ComboNum nucleationHomogenousY = new ComboNum(1, 20, buttonPanel);
 
         // ================= Neighborhood ==================
 
         Label neighborhoodLabel = new Label("Sąsiedztwo:", buttonPanel);
         ComboText neighborhoodTypes = new ComboText(Stream.of(Neighborhoods.values()).map(Neighborhoods::name).toArray(String[]::new), buttonPanel);
+        Label neighborhoodRandomLabel = new Label("Losowe z promieniem:", buttonPanel);
+        ComboNum radiusNeighborhood = new ComboNum(1, 20, buttonPanel);
 
         // ================= Mesh & Board Options ==================
 
-        AtomicInteger selectedMesh = new AtomicInteger();
-        AtomicInteger selectedCellSize = new AtomicInteger();
+        AtomicInteger selectedMeshX = new AtomicInteger();
+        AtomicInteger selectedMeshY = new AtomicInteger();
 
-        Label boardTools = new Label("Opcje planszy:", buttonPanel);
-
-        MW.elements.Button clear = new MW.elements.Button("Wyczyść", buttonPanel);
+        MW.elements.Button clear = new MW.elements.Button("Wyczyść planszę", buttonPanel);
         clear.button.addActionListener(e -> {
             canvasPanel.dataManager.zeroMatrix();
             canvasPanel.repaint();
@@ -110,14 +118,17 @@ public class Main extends JFrame {
 
         AtomicBoolean isBoardCreated = new AtomicBoolean(false);
 
-        MW.elements.Button board = new MW.elements.Button("Stwórz", buttonPanel);
+        MW.elements.Button board = new MW.elements.Button("Stwórz planszę", buttonPanel);
         board.button.addActionListener(e -> {
             // MESH SIZE
-            selectedMesh.set((Integer) meshSize.comboBox.getSelectedItem());
-            canvasPanel.dataManager.setMeshSize(selectedMesh.intValue());
+            selectedMeshX.set((Integer) meshSizeX.comboBox.getSelectedItem());
+            canvasPanel.dataManager.setMeshSizeX(selectedMeshX.intValue());
+            selectedMeshY.set((Integer) meshSizeY.comboBox.getSelectedItem());
+            canvasPanel.dataManager.setMeshSizeY(selectedMeshY.intValue());
+
             // CELL SIZE
-            selectedCellSize.set((Integer) cellSize.comboBox.getSelectedItem());
-            canvasPanel.dataManager.setCellSize(selectedCellSize.intValue());
+            int cellSize = 1000 / (Integer) meshSizeX.comboBox.getSelectedItem();
+            canvasPanel.dataManager.setCellSize(cellSize);
             // NEIGHBORHOOD
            // System.out.println((Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem())));
             dm.setup(Neighborhoods.valueOf((String)neighborhoodTypes.comboBox.getSelectedItem()));
@@ -130,8 +141,6 @@ public class Main extends JFrame {
         });
 
         // ================= Files Options ==================
-
-        Label patterns = new Label("Zapis/Odczyt:", buttonPanel);
 
         Button saveButton = new MW.elements.Button("Zapisz do pliku", buttonPanel);
         saveButton.button.addActionListener(e -> {
@@ -156,8 +165,6 @@ public class Main extends JFrame {
         });
 
         // ================= Simulation ==================
-
-        Label setupLabel = new Label("Start/Stop: ", buttonPanel);
 
         MW.elements.Button startBtn = new MW.elements.Button("Start!", buttonPanel);
         AtomicBoolean isStarted = new AtomicBoolean(false);
@@ -212,27 +219,6 @@ public class Main extends JFrame {
                     canvasPanel.dataManager.createMatrixCell(cellX, cellY);
             }
 
-        });
-
-        addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-
-                super.mouseDragged(e);
-                int x = e.getX() - (windowXCorrection + canvasPanel.dataManager.getCellSize());
-                int y = e.getY() - (windowYCorrection + canvasPanel.dataManager.getCellSize());
-
-                int cellX = x/ canvasPanel.dataManager.getCellSize();
-                int cellY = y/ canvasPanel.dataManager.getCellSize();
-
-                if (isBoardCreated.get()){
-                    if (SwingUtilities.isRightMouseButton(e))
-                        canvasPanel.dataManager.drawFillMatrixCell(cellX, cellY, false);
-                    else if (SwingUtilities.isLeftMouseButton(e))
-                        canvasPanel.dataManager.drawFillMatrixCell(cellX, cellY, true);
-                }
-
-            }
         });
 
     }

@@ -3,17 +3,16 @@ package MW.data;
 import MW.enums.Neighborhoods;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static MW.data.NeighborhoodMatrix.neighborhoodMatrix;
 
 public class DataManager {
 
-    int meshSize;
+    int meshSizeX;
+    int meshSizeY;
     int cellSize;
     Cell[][] cellMatrix;
     int[][] neighborhoodMatrix;
@@ -27,12 +26,20 @@ public class DataManager {
         neighborhoodMatrix = neighborhoodMatrix(neighborhoods);
     }
 
-    public int getMeshSize() {
-        return meshSize;
+    public int getMeshSizeX() {
+        return meshSizeX;
     }
 
-    public void setMeshSize(int meshSize) {
-        this.meshSize = meshSize;
+    public void setMeshSizeX(int meshSizeX) {
+        this.meshSizeX = meshSizeX;
+    }
+
+    public int getMeshSizeY() {
+        return meshSizeY;
+    }
+
+    public void setMeshSizeY(int meshSizeY) {
+        this.meshSizeY = meshSizeY;
     }
 
     public int getCellSize() {
@@ -52,13 +59,13 @@ public class DataManager {
     }
 
     public void fillMatrix() {
-        cellMatrix = new Cell[meshSize][meshSize];
+        cellMatrix = new Cell[meshSizeX][meshSizeY];
         zeroMatrix();
     }
 
     public void zeroMatrix() {
-        for (int i = 0; i < meshSize; i++)
-            for (int j = 0; j < meshSize; j++) {
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
                 cellMatrix[i][j] = new Cell(false, Color.WHITE);
             }
     }
@@ -80,18 +87,19 @@ public class DataManager {
     public void cellNeighborhood() {
 
         // ====== matrix to store newer data ======
-        Cell[][] newCells = new Cell[meshSize][meshSize];
-        for (int i = 0; i < meshSize; i++)
-            for (int j = 0; j < meshSize; j++) {
+        Cell[][] newCells = new Cell[meshSizeX][meshSizeY];
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
                 newCells[i][j] = new Cell(false, Color.WHITE);
             }
 
         // ====== cell validation ======
-        for (int i = 0; i < meshSize; i++)
-            for (int j = 0; j < meshSize; j++) {
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
 
                 // ====== cell neighbors ======
                 List<Cell> activeNeighbors = new ArrayList<>();
+                if (!cellMatrix[i][j].isActive())
                 for (int m = -1; m <= 1; m++) {
                     for (int n = -1; n <= 1; n++) {
 
@@ -104,13 +112,13 @@ public class DataManager {
                         if (x == i && y == j)
                             continue;
                         if (x < 0)
-                            x += meshSize;
+                            x += meshSizeX;
                         if (y < 0)
-                            y += meshSize;
-                        if (x > meshSize - 1)
-                            x -= meshSize;
-                        if (y > meshSize - 1)
-                            y -= meshSize;
+                            y += meshSizeY;
+                        if (x > meshSizeX - 1)
+                            x -= meshSizeX;
+                        if (y > meshSizeY - 1)
+                            y -= meshSizeY;
 
                         if (cellMatrix[x][y].isActive())
                             activeNeighbors.add(cellMatrix[x][y]);
@@ -139,9 +147,21 @@ public class DataManager {
             colors.merge(cellColor, 1, Integer::sum);
         }
 
-     //   for (Color c : colors.keySet()) {
-       //     System.out.println("key: " + c + " value: " + colors.get(c));
-     //   }
+        Map.Entry<Color, Integer> maxEntry = null;
+
+        for (Map.Entry<Color, Integer> entry : colors.entrySet())
+        {
+            if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0)
+            {
+                maxEntry = entry;
+            }
+        }
+
+        for (Cell cell : cellList) {
+            Color cellColor = cell.getColor();
+            if (cellColor == Objects.requireNonNull(maxEntry).getKey())
+                return cell;
+        }
 
         return cellList.get(0);
 
