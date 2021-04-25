@@ -10,6 +10,9 @@ import MW.elements.Button;
 import MW.elements.ComboNum;
 import MW.elements.ComboText;
 import MW.elements.Label;
+import MW.enums.BCs;
+import MW.enums.Neighborhoods;
+import MW.enums.Nucleations;
 import MW.tools.PatternTXT;
 
 import javax.swing.*;
@@ -25,6 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class Main extends JFrame {
 
@@ -81,17 +85,17 @@ public class Main extends JFrame {
         // ================= Boundary Conditions ==================
 
         Label boundaryLabel = new Label("Warunki brzegowe:", buttonPanel);
-        ComboText boundaryTypes = new ComboText(new String[]{"Periodyczne", "Absorbujące"}, buttonPanel);
+        ComboText boundaryTypes = new ComboText(Stream.of(BCs.values()).map(BCs::name).toArray(String[]::new), buttonPanel);
 
         // ================= Nucleation ==================
 
         Label nucleationLabel = new Label("Zarodkowanie:", buttonPanel);
-        ComboText nucleationTypes = new ComboText(new String[]{"Jednorodne", "Z promieniem", "Wyklikane", "Losowe"}, buttonPanel);
+        ComboText nucleationTypes = new ComboText(Stream.of(Nucleations.values()).map(Nucleations::name).toArray(String[]::new), buttonPanel);
 
         // ================= Neighborhood ==================
 
         Label neighborhoodLabel = new Label("Sąsiedztwo:", buttonPanel);
-        ComboText neighborhoodTypes = new ComboText(new String[]{"Moore", "Von Neumann", "Left-Hex", "Right-Hex", "Random-Hex", "Random-Pen", "Radius"}, buttonPanel);
+        ComboText neighborhoodsTypes = new ComboText(Stream.of(Neighborhoods.values()).map(Neighborhoods::name).toArray(String[]::new), buttonPanel);
 
         // ================= Mesh & Board Options ==================
 
@@ -117,7 +121,7 @@ public class Main extends JFrame {
             selectedCellSize.set((Integer) cellSize.comboBox.getSelectedItem());
             canvasPanel.dataManager.setCellSize(selectedCellSize.intValue());
             // NEIGHBORHOOD
-             String selectedNeighborhood = (String) neighborhoodTypes.comboBox.getSelectedItem();
+             //String selectedNeighborhood = (String) neighborhoodTypes.comboBox.getSelectedItem();
              //canvasPanel.dataManager.setNeighborhood(selectedNeighborhood);
             // SET MATRIX
             canvasPanel.dataManager.fillMatrix();

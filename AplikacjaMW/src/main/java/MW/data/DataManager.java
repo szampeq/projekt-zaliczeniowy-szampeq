@@ -3,6 +3,7 @@ package MW.data;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DataManager {
@@ -10,6 +11,7 @@ public class DataManager {
     int meshSize;
     int cellSize;
     Cell[][] cellMatrix;
+    final Random r = new Random();
 
     public DataManager(){
         this.cellSize = 10;
@@ -52,13 +54,16 @@ public class DataManager {
     }
 
     public void changeMatrixCell(int x, int y) {
-        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length)
+        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length) {
             cellMatrix[x][y].isActive = !cellMatrix[x][y].isActive();
+        }
     }
 
     public void drawFillMatrixCell(int x, int y, boolean isActive) {
-        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length)
+        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length) {
             cellMatrix[x][y].isActive = isActive;
+            cellMatrix[x][y].setColor(new Color(r.nextInt(256),r.nextInt(256),r.nextInt(256),r.nextInt(256)));
+        }
     }
 
     public void cellNeighborhood() {

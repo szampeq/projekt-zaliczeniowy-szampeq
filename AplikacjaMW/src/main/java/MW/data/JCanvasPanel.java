@@ -18,9 +18,9 @@ public class JCanvasPanel extends JPanel {
         int CS = dataManager.getCellSize();
         Graphics2D g2 = (Graphics2D) g;
 
-        g2.setColor(Color.RED);
         for (int j = 0; j < MS; j++) {
             for (int i = 0; i < MS; i++) {
+                g2.setColor(dataManager.cellMatrix[i][j].getColor());
                 if(dataManager.cellMatrix[i][j].isActive())
                     g2.fillRect(i * CS + CS, j * CS + CS, CS, CS);
             }

@@ -18,4 +18,12 @@ public class Cell {
     public void setActive(boolean active) {
         isActive = active;
     }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
 }
