@@ -6,6 +6,10 @@ public enum Neighborhoods {
     LeftHex,
     RightHex,
     RandomHex,
+    LeftPen,
+    RightPen,
+    TopPen,
+    BottomPen,
     RandomPen,
     Radius
 }

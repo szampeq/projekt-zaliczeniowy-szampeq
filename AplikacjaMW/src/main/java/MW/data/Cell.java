@@ -1,9 +1,11 @@
 package MW.data;
 
 import java.awt.*;
+import java.util.Random;
 
 public class Cell {
     int id;
+    static int number = 0;
     boolean isActive;
     Color color;
 
@@ -24,8 +26,8 @@ public class Cell {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setId() {
+        id = number++;
     }
 
     public Color getColor() {
@@ -36,5 +38,11 @@ public class Cell {
         this.color = color;
     }
 
+    public void born() {
+        final Random r = new Random();
+        id = number++;
+        isActive = true;
+        color = new Color(r.nextInt(256),r.nextInt(256),r.nextInt(256),r.nextInt(256));
+    }
 
 }

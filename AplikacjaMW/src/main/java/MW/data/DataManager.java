@@ -22,6 +22,7 @@ public class DataManager {
 
     BCs selectedBCs;
     Nucleations nucleations;
+    Neighborhoods neighborhoodType;
 
     int nucleationRandomGrains;
     int nucleationRadiusGrains;
@@ -39,9 +40,13 @@ public class DataManager {
     public void setup(Neighborhoods neighborhoods, BCs bcs, Nucleations nucleations, int nucleationRandomGrains,
                       int nucleationRadiusGrains, int nucleationRadiusValue, int nucleationHomogenousX,
                       int nucleationHomogenousY, int neighborhoodRandomRadius) {
-        neighborhoodMatrix = neighborhoodMatrix(neighborhoods);
+        if (neighborhoods != Neighborhoods.Radius)
+            neighborhoodMatrix = neighborhoodMatrix(neighborhoods);
+        else
+            neighborhoodMatrix = NeighborhoodMatrix.radiusMatrix(neighborhoodRandomRadius);
         this.selectedBCs = bcs;
         this.nucleations = nucleations;
+        this.neighborhoodType = neighborhoods;
         this.nucleationRandomGrains = nucleationRandomGrains;
         this.nucleationRadiusGrains = nucleationRadiusGrains;
         this.nucleationRadiusValue = nucleationRadiusValue;
@@ -85,6 +90,20 @@ public class DataManager {
     public void fillMatrix() {
         cellMatrix = new Cell[meshSizeX][meshSizeY];
         zeroMatrix();
+
+        switch (nucleations) {
+            case Random:
+                randomMatrix();
+                break;
+            case Radius:
+                radiusMatrix();
+                break;
+            case Homogeneous:
+                homogenousMatrix();
+                break;
+            default:
+                zeroMatrix();
+        }
     }
 
     public void zeroMatrix() {
@@ -94,17 +113,84 @@ public class DataManager {
             }
     }
 
-    public void createMatrixCell(int x, int y) {
-        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length && !cellMatrix[x][y].isActive()) {
-            cellMatrix[x][y].setActive(true);
-            cellMatrix[x][y].setColor(new Color(r.nextInt(256),r.nextInt(256),r.nextInt(256),r.nextInt(256)));
+    void homogenousMatrix() {
+        int fixedX = meshSizeX/nucleationHomogenousX;
+        int fixedY = meshSizeY/nucleationHomogenousY;
+
+        for (int i = 0; i < nucleationHomogenousX; i++)
+            for (int j = 0; j < nucleationHomogenousY; j++) {
+                int x = fixedX/2 + fixedX*i;
+                int y = fixedY/2 + fixedY*j;
+                if (!cellMatrix[x][y].isActive()) {
+                    cellMatrix[x][y].setActive(true);
+                    cellMatrix[x][y].setColor(new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256), r.nextInt(256)));
+                }
+            }
+    }
+
+    void radiusMatrix() {
+        int Nmax = 1000;
+        int borned = 0;
+
+        for (int i = 0; i < Nmax; i++) {
+            int randomX = ThreadLocalRandom.current().nextInt(0, meshSizeX - 1);
+            int randomY = ThreadLocalRandom.current().nextInt(0, meshSizeY - 1);
+
+            if (!checkRadius(randomX, randomY, nucleationRadiusValue)) {
+                cellMatrix[randomX][randomY].born();
+                borned++;
+            }
+
+            if (borned >= nucleationRadiusGrains)
+                break;
         }
     }
 
-    public void drawFillMatrixCell(int x, int y, boolean isActive) {
-        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length) {
-            cellMatrix[x][y].isActive = isActive;
-            cellMatrix[x][y].setColor(new Color(r.nextInt(256),r.nextInt(256),r.nextInt(256),r.nextInt(256)));
+    boolean checkRadius(int xCenter, int yCenter, int radius) {
+
+        for (int x = xCenter - radius; x <= xCenter; x++)
+            for (int y = yCenter - radius; y <= yCenter; y++)
+            {
+                // we don't have to take the square root, it's slow
+                if ((x - xCenter)*(x - xCenter) + (y - yCenter)*(y - yCenter) <= radius*radius)
+                {
+
+                    int xSym = xCenter - (x - xCenter);
+                    int ySym = yCenter - (y - yCenter);
+                    // (x, y), (x, ySym), (xSym , y), (xSym, ySym) are in the circle
+
+                    if (x < 0 || y < 0 || xSym < 0 || ySym < 0)
+                        continue;
+                    if (x > meshSizeX-1 || xSym > meshSizeX-1 || y > meshSizeY-1 || ySym > meshSizeY-1)
+                        continue;
+
+                    if (cellMatrix[x][y].isActive())
+                        return true;
+                    if (cellMatrix[x][ySym].isActive())
+                        return true;
+                    if (cellMatrix[xSym][y].isActive())
+                        return true;
+                    if (cellMatrix[xSym][ySym].isActive())
+                        return true;
+                }
+            }
+        return false;
+    }
+
+    void randomMatrix() {
+        for (int i = 0; i < nucleationRandomGrains; i++) {
+            int randomX = ThreadLocalRandom.current().nextInt(0, meshSizeX-1);
+            int randomY = ThreadLocalRandom.current().nextInt(0, meshSizeY-1);
+
+            if (!cellMatrix[randomX][randomY].isActive()) {
+                cellMatrix[randomX][randomY].born();
+            }
+        }
+    }
+
+    public void createMatrixCell(int x, int y) {
+        if (x >= 0 && x < cellMatrix.length && y >= 0 && y < cellMatrix[0].length && !cellMatrix[x][y].isActive()) {
+            cellMatrix[x][y].born();
         }
     }
 
@@ -117,20 +203,30 @@ public class DataManager {
                 newCells[i][j] = new Cell(false, Color.WHITE);
             }
 
+        int leftNeigh = -neighborhoodMatrix.length / 2;
+        int rightNeigh = -leftNeigh;
+
         // ====== cell validation ======
         for (int i = 0; i < meshSizeX; i++)
             for (int j = 0; j < meshSizeY; j++) {
 
                 // ====== cell neighbors ======
                 List<Cell> activeNeighbors = new ArrayList<>();
+
                 if (!cellMatrix[i][j].isActive())
-                for (int m = -1; m <= 1; m++) {
-                    for (int n = -1; n <= 1; n++) {
+                for (int m = leftNeigh; m <= rightNeigh; m++) {
+                    for (int n = leftNeigh; n <= rightNeigh; n++) {
 
                         int x = i + m;
                         int y = j + n;
 
-                        if (neighborhoodMatrix[m+1][n+1] == 0)
+                        /* Random Neighborhood */
+                        if (neighborhoodType == Neighborhoods.RandomHex || neighborhoodType == Neighborhoods.RandomPen)
+                            neighborhoodMatrix = neighborhoodMatrix(neighborhoodType);
+
+                        if (m + rightNeigh > neighborhoodMatrix.length-1 || n + rightNeigh > neighborhoodMatrix.length-1)
+                            continue;
+                        if (neighborhoodMatrix[m+rightNeigh][n+rightNeigh] == 0)
                             continue;
 
                         if (x == i && y == j)
@@ -165,6 +261,7 @@ public class DataManager {
         cellMatrix = newCells;
     }
 
+    // can be shorten (only hashmap instead of mix list + hashmap)
     Cell dominantCell(List<Cell> cellList) {
 
         if (cellList.size() == 1)
