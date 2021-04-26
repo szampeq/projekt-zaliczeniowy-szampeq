@@ -88,9 +88,9 @@ public class Main extends JFrame {
         Label nucleationLabel = new Label("Zarodkowanie:", buttonPanel);
         ComboText nucleationTypes = new ComboText(Stream.of(Nucleations.values()).map(Nucleations::name).toArray(String[]::new), buttonPanel);
         Label nucleationRandomGrainsLabel = new Label("Losowe - liczba ziaren:", buttonPanel);
-        ComboNum nucleationRandomGrains = new ComboNum(1, 20, buttonPanel);
+        ComboNum nucleationRandomGrains = new ComboNum(1, 50, buttonPanel);
         Label nucleationRadiusGrainsLabel = new Label("Z promieniem - ziarna:", buttonPanel);
-        ComboNum nucleationRadiusGrains = new ComboNum(1, 20, buttonPanel);
+        ComboNum nucleationRadiusGrains = new ComboNum(1, 50, buttonPanel);
         Label nucleationRadiusValueLabel = new Label("Z promieniem - promień:", buttonPanel);
         ComboNum nucleationRadiusValue = new ComboNum(1, 20, buttonPanel);
         Label nucleationHomogenousXLabel = new Label("Jednorodne - ziarna po X:", buttonPanel);
