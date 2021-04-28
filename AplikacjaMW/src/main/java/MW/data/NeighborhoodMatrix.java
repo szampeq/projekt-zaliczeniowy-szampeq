@@ -122,8 +122,6 @@ public abstract class NeighborhoodMatrix {
                     matrix[xSym][ySym] = 1;
                 }
             }
-
-
         return matrix;
     }
 

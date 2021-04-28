@@ -102,7 +102,7 @@ public class Main extends JFrame {
 
         Label neighborhoodLabel = new Label("Sąsiedztwo:", buttonPanel);
         ComboText neighborhoodTypes = new ComboText(Stream.of(Neighborhoods.values()).map(Neighborhoods::name).toArray(String[]::new), buttonPanel);
-        Label neighborhoodRandomLabel = new Label("Losowe z promieniem:", buttonPanel);
+        Label neighborhoodRandomLabel = new Label("Z promieniem:", buttonPanel);
         ComboNum radiusNeighborhood = new ComboNum(1, 20, buttonPanel);
 
         // ================= Mesh & Board Options ==================
@@ -229,7 +229,5 @@ public class Main extends JFrame {
             }
 
         });
-
     }
-
 }
