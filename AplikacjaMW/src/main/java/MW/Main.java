@@ -92,18 +92,18 @@ public class Main extends JFrame {
         Label nucleationRadiusGrainsLabel = new Label("Z promieniem - ziarna:", buttonPanel);
         ComboNum nucleationRadiusGrains = new ComboNum(1, 50, buttonPanel);
         Label nucleationRadiusValueLabel = new Label("Z promieniem - promień:", buttonPanel);
-        ComboNum nucleationRadiusValue = new ComboNum(1, 20, buttonPanel);
+        ComboNum nucleationRadiusValue = new ComboNum(1, 50, buttonPanel);
         Label nucleationHomogenousXLabel = new Label("Jednorodne - ziarna po X:", buttonPanel);
-        ComboNum nucleationHomogenousX = new ComboNum(1, 20, buttonPanel);
+        ComboNum nucleationHomogenousX = new ComboNum(1, 50, buttonPanel);
         Label nucleationHomogenousYLabel = new Label("Jednorodne - ziarna po Y:", buttonPanel);
-        ComboNum nucleationHomogenousY = new ComboNum(1, 20, buttonPanel);
+        ComboNum nucleationHomogenousY = new ComboNum(1, 50, buttonPanel);
 
         // ================= Neighborhood ==================
 
         Label neighborhoodLabel = new Label("Sąsiedztwo:", buttonPanel);
         ComboText neighborhoodTypes = new ComboText(Stream.of(Neighborhoods.values()).map(Neighborhoods::name).toArray(String[]::new), buttonPanel);
         Label neighborhoodRandomLabel = new Label("Z promieniem:", buttonPanel);
-        ComboNum radiusNeighborhood = new ComboNum(1, 20, buttonPanel);
+        ComboNum radiusNeighborhood = new ComboNum(1, 50, buttonPanel);
 
         // ================= Mesh & Board Options ==================
 

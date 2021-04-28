@@ -246,7 +246,6 @@ public class DataManager {
                                 continue;
                         }
 
-
                         if (cellMatrix[x][y].isActive())
                             activeNeighbors.add(cellMatrix[x][y]);
                     }

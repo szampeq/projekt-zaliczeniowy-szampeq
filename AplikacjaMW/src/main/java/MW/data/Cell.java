@@ -8,6 +8,7 @@ public class Cell {
     static int number = 0;
     boolean isActive;
     Color color;
+    final static Random r = new Random();
 
     Cell(boolean isActive, Color color) {
         this.isActive = isActive;
@@ -39,7 +40,6 @@ public class Cell {
     }
 
     public void born() {
-        final Random r = new Random();
         id = number++;
         isActive = true;
         color = new Color(r.nextInt(256),r.nextInt(256),r.nextInt(256),r.nextInt(256));
