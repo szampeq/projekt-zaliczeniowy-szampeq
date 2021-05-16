@@ -19,6 +19,7 @@ public class DataManager {
 
     Cell[][] cellMatrix;
     int[][] neighborhoodMatrix;
+    List<Point> points;
 
     BCs selectedBCs;
     Nucleations nucleations;
@@ -32,6 +33,10 @@ public class DataManager {
     int neighborhoodRandomRadius;
 
     final Random r = new Random();
+
+    /* MC FIELDS */
+    double kt;
+    int numOfIter;
 
     public DataManager(){
         this.cellSize = 10;
@@ -53,6 +58,20 @@ public class DataManager {
         this.nucleationHomogenousX = nucleationHomogenousX;
         this.nucleationHomogenousY = nucleationHomogenousY;
         this.neighborhoodRandomRadius = neighborhoodRandomRadius;
+        createPointsList();
+    }
+
+    public void createPointsList() {
+        points = new ArrayList<>();
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
+                points.add(new Point(i, j));
+            }
+    }
+
+    public void setMonteCarlo(double kt, int numOfIter) {
+        this.kt = kt;
+        this.numOfIter = numOfIter;
     }
 
     public int getMeshSizeX() {
@@ -109,7 +128,7 @@ public class DataManager {
     public void zeroMatrix() {
         for (int i = 0; i < meshSizeX; i++)
             for (int j = 0; j < meshSizeY; j++) {
-                cellMatrix[i][j] = new Cell(false, Color.WHITE);
+                cellMatrix[i][j] = new Cell(false, Color.WHITE, new Point(i, j));
             }
     }
 
@@ -121,10 +140,9 @@ public class DataManager {
             for (int j = 0; j < nucleationHomogenousY; j++) {
                 int x = fixedX/2 + fixedX*i;
                 int y = fixedY/2 + fixedY*j;
-                if (!cellMatrix[x][y].isActive()) {
-                    cellMatrix[x][y].setActive(true);
-                    cellMatrix[x][y].setColor(new Color(r.nextInt(256), r.nextInt(256), r.nextInt(256), r.nextInt(256)));
-                }
+                if (!cellMatrix[x][y].isActive())
+                    cellMatrix[x][y].born();
+
             }
     }
 
@@ -194,13 +212,21 @@ public class DataManager {
         }
     }
 
+    public void printInfoAboutCell(int x, int y) {
+        System.out.println(
+                "Id: " + cellMatrix[x][y].getId() + "\n" +
+                "Color: " + cellMatrix[x][y].getColor().getRGB() + "\n" +
+                "Energy: " + cellMatrix[x][y].getEnergy() + "\n"
+        );
+    }
+
     public void cellNeighborhood() {
 
         // ====== matrix to store newer data ======
         Cell[][] newCells = new Cell[meshSizeX][meshSizeY];
         for (int i = 0; i < meshSizeX; i++)
             for (int j = 0; j < meshSizeY; j++) {
-                newCells[i][j] = new Cell(false, Color.WHITE);
+                newCells[i][j] = new Cell(false, Color.WHITE, new Point(i, j));
             }
 
         int leftNeigh = -neighborhoodMatrix.length / 2;
@@ -248,12 +274,16 @@ public class DataManager {
 
                         if (cellMatrix[x][y].isActive())
                             activeNeighbors.add(cellMatrix[x][y]);
+
                     }
                 }
-                if (activeNeighbors.size() > 0)
-                    newCells[i][j] = dominantCell(activeNeighbors);
-                else
+                if (activeNeighbors.size() > 0) {
+                    newCells[i][j].copyData(dominantCell(activeNeighbors));
+                }
+                else {
                     newCells[i][j] = cellMatrix[i][j];
+                }
+
             }
 
         // ======= SHIFT MATRIX =======
@@ -266,7 +296,7 @@ public class DataManager {
         if (cellList.size() == 1)
            return cellList.get(0);
 
-        HashMap<Color, Integer> colors = new HashMap<Color, Integer>();
+        HashMap<Color, Integer> colors = new HashMap<>();
 
         for (Cell cell : cellList) {
             Color cellColor = cell.getColor();
@@ -291,6 +321,146 @@ public class DataManager {
         }
 
         return cellList.get(0);
+
+    }
+
+    Cell getRandomNeighbor(int cx, int cy) {
+        int leftNeigh = -neighborhoodMatrix.length / 2;
+        int rightNeigh = -leftNeigh;
+
+        List<Cell> neighbors = new ArrayList<>();
+
+        for (int m = leftNeigh; m <= rightNeigh; m++) {
+            for (int n = leftNeigh; n <= rightNeigh; n++) {
+
+                int x = cx + m;
+                int y = cy + n;
+
+                /* Random Neighborhood */
+                if (neighborhoodType == Neighborhoods.RandomHex || neighborhoodType == Neighborhoods.RandomPen)
+                    neighborhoodMatrix = neighborhoodMatrix(neighborhoodType);
+
+                if (m + rightNeigh > neighborhoodMatrix.length-1 || n + rightNeigh > neighborhoodMatrix.length-1)
+                    continue;
+                if (neighborhoodMatrix[m+rightNeigh][n+rightNeigh] == 0)
+                    continue;
+
+                if (x == cx && y == cy)
+                    continue;
+                /* BOUNDARY CONDITIONS */
+                if (selectedBCs == BCs.PERIODIC) {
+                    if (x < 0)
+                        x += meshSizeX;
+                    if (y < 0)
+                        y += meshSizeY;
+                    if (x > meshSizeX - 1)
+                        x -= meshSizeX;
+                    if (y > meshSizeY - 1)
+                        y -= meshSizeY;
+                } else {
+                    if (x < 0 || y < 0 || x > meshSizeX - 1 || y > meshSizeY - 1)
+                        continue;
+                }
+
+                neighbors.add(cellMatrix[x][y]);
+            }
+        }
+
+        try {
+            return neighbors.get(r.nextInt(neighbors.size()));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /* = = = = = = = = = = = MONTE CARLO METHODS = = = = = = = = = = = */
+
+    public void monteCarlo() throws InterruptedException {
+
+            for (int i = 0; i < numOfIter; i++) {
+                if (Thread.currentThread().isInterrupted())
+                    break;
+
+                Collections.shuffle(points);
+
+            for (Point p : points) {
+                /* Current cell energy */
+                pointEnergy(p);
+                int beforeEnergy = cellMatrix[p.x][p.y].getEnergy();
+
+                /* Random neighbor */
+                int currId = cellMatrix[p.x][p.y].getId();
+                Color currColor = cellMatrix[p.x][p.y].getColor();
+
+                Cell randomNeighbor = getRandomNeighbor(p.x, p.y);
+                if (randomNeighbor == null)
+                    continue;
+
+                cellMatrix[p.x][p.y].copyData(randomNeighbor);
+
+                /* New Energy */
+                pointEnergy(p);
+                int afterEnergy = cellMatrix[p.x][p.y].getEnergy();
+                int dE = afterEnergy - beforeEnergy;
+
+                /* Accept changes */
+                if (dE > 0) {
+                    double chance = Math.exp(-dE / kt);
+                    double draw = r.nextDouble();
+                    if (draw >= chance) {
+                        cellMatrix[p.x][p.y].id = currId;
+                        cellMatrix[p.x][p.y].color = currColor;
+                        cellMatrix[p.x][p.y].energy = beforeEnergy;
+                    }
+                }
+            }
+        }
+    }
+
+    public void pointEnergy(Point p) {
+        int energy = 0;
+
+        int leftNeigh = -neighborhoodMatrix.length / 2;
+        int rightNeigh = -leftNeigh;
+
+        for (int m = leftNeigh; m <= rightNeigh; m++) {
+            for (int n = leftNeigh; n <= rightNeigh; n++) {
+                int x = p.x + m;
+                int y = p.y + n;
+
+                /* Random Neighborhood */
+                if (neighborhoodType == Neighborhoods.RandomHex || neighborhoodType == Neighborhoods.RandomPen)
+                    neighborhoodMatrix = neighborhoodMatrix(neighborhoodType);
+
+                if (m + rightNeigh > neighborhoodMatrix.length-1 || n + rightNeigh > neighborhoodMatrix.length-1)
+                    continue;
+                if (neighborhoodMatrix[m+rightNeigh][n+rightNeigh] == 0)
+                    continue;
+
+                if (x == p.x && y == p.y)
+                    continue;
+                /* BOUNDARY CONDITIONS */
+                if (selectedBCs == BCs.PERIODIC) {
+                    if (x < 0)
+                        x += meshSizeX;
+                    if (y < 0)
+                        y += meshSizeY;
+                    if (x > meshSizeX - 1)
+                        x -= meshSizeX;
+                    if (y > meshSizeY - 1)
+                        y -= meshSizeY;
+                } else {
+                    if (x < 0 || y < 0 || x > meshSizeX - 1 || y > meshSizeY - 1)
+                        continue;
+                }
+
+                if (cellMatrix[p.x][p.y].getId() != cellMatrix[x][y].getId())
+                    energy++;
+
+            }
+        }
+
+        cellMatrix[p.x][p.y].setEnergy(energy);
 
     }
 

@@ -1,11 +1,14 @@
 package MW.data;
 
+import MW.Main;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class JCanvasPanel extends JPanel {
 
     public DataManager dataManager;
+    public boolean energyMap = false;
 
     public JCanvasPanel(DataManager dataManager){
         this.dataManager = dataManager;
@@ -21,21 +24,18 @@ public class JCanvasPanel extends JPanel {
 
         for (int j = 0; j < MSY; j++) {
             for (int i = 0; i < MSX; i++) {
-                g2.setColor(dataManager.cellMatrix[i][j].getColor());
-                //if(dataManager.cellMatrix[i][j].isActive())
-                    g2.fillRect(i * CS + CS, j * CS + CS, CS, CS);
+                if (!energyMap)
+                    g2.setColor(dataManager.cellMatrix[i][j].getColor());
+                else {
+                    if (dataManager.cellMatrix[i][j].getEnergy() == 0)
+                        g2.setColor(Color.ORANGE);
+                    else
+                        g2.setColor(Color.BLACK);
+                }
+                g2.fillRect(i * CS + CS, j * CS + CS, CS, CS);
             }
         }
 
-/*
-        g2.setColor(Color.white);
-        g2.drawRect(CS, CS, MSX * CS, MSY * CS);
-        for (int i = CS; i <= MSX * CS; i += CS) {
-            g2.drawLine(i, CS, i, MSY * CS + CS);
-            g2.drawLine(CS, i, MSX * CS + CS, i);
-        }
-
- */
         super.repaint();
     }
 
