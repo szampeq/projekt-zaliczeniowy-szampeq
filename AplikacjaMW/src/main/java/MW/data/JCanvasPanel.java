@@ -1,6 +1,7 @@
 package MW.data;
 
 import MW.Main;
+import MW.enums.Neighborhoods;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,8 +30,17 @@ public class JCanvasPanel extends JPanel {
                 else {
                     if (dataManager.cellMatrix[i][j].getEnergy() == 0)
                         g2.setColor(Color.ORANGE);
-                    else
-                        g2.setColor(Color.BLACK);
+                    else {
+                        int changeValue = 10;
+                        if (dataManager.neighborhoodType == Neighborhoods.Radius)
+                            changeValue = 5;
+                        int value = dataManager.cellMatrix[i][j].getEnergy() * changeValue;
+                        if (value > 255)
+                            value = 255;
+
+                        Color dark = new Color(value, value, value);
+                        g2.setColor(dark);
+                    }
                 }
                 g2.fillRect(i * CS + CS, j * CS + CS, CS, CS);
             }
