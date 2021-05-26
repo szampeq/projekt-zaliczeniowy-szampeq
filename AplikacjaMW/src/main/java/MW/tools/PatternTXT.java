@@ -10,26 +10,24 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class PatternTXT {
-    public static int numberTXT = 0;
+    public static int numberCSV = 0;
     public static void savePattern(DataManager dataManager){
 
         try
         {
-            FileWriter txt = new FileWriter("src/main/resources/patterns/pattern" + numberTXT + ".txt");
-            Cell[][] matrix = dataManager.getMatrix();
-            txt.write(dataManager.getMeshSizeX() + "\n");
-            txt.write(dataManager.getMeshSizeY() + "\n");
-            for (int i = 0; i < dataManager.getMeshSizeX(); i++) {
-                for (int j = 0; j < dataManager.getMeshSizeY(); j++) {
-                    if(matrix[i][j].isActive())
-                        txt.write("1");
-                    else
-                        txt.write("0");
-                }
+            FileWriter txt = new FileWriter("zapis" + numberCSV + ".csv");
+
+            int size = dataManager.listOfDislocationPool.size();
+
+            for (int i = 0; i < size; i++)
+            {
+                txt.write(dataManager.listOfSteps.get(i).toString());
+                txt.write(";");
+                txt.write(dataManager.listOfDislocationPool.get(i).toString());
                 txt.write("\n");
             }
-            System.out.println("Pattern Saved");
-            numberTXT++;
+            System.out.println("File Saved");
+            numberCSV++;
             txt.close();
 
         } catch (IOException ex)

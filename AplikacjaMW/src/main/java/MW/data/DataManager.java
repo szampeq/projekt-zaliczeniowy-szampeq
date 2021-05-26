@@ -38,6 +38,27 @@ public class DataManager {
     double kt;
     int numOfIter;
 
+    /* RECRYSTALLIZATION FIELDS */
+    double parA;
+    double parB;
+    double dislDiv;
+    double timeStep;
+    double packageSize;
+    double propability;
+    double timeLimit;
+
+    double prevPool;
+    double currPool;
+    double averagePoolPerCell;
+    double deltaPool;
+
+    double criticalValue;
+
+    public List<Double> listOfSteps = new ArrayList<>();
+    public List<Double> listOfDislocationPool = new ArrayList<>();
+    List<Point> recrystallizedInPreviousStep = new ArrayList<>();
+    List<Point> recrystallizedInCurrentStep = new ArrayList<>();
+
     public DataManager(){
         this.cellSize = 10;
     }
@@ -72,6 +93,21 @@ public class DataManager {
     public void setMonteCarlo(double kt, int numOfIter) {
         this.kt = kt;
         this.numOfIter = numOfIter;
+    }
+
+    public void setRecrystallization(double parA, double parB, double dislDiv, double timeStep, double packageSize, double propability, double timeLimit) {
+        this.parA = parA;
+        this.parB = parB;
+        this.dislDiv = dislDiv;
+        this.timeStep = timeStep;
+        this.packageSize = packageSize;
+        this.propability = propability;
+        this.timeLimit = timeLimit;
+        this.prevPool = 1.0;
+        this.currPool = 1.0;
+        this.averagePoolPerCell = 0.0;
+        this.deltaPool = 0.0;
+        this.criticalValue = 4.21584E+12 / (meshSizeX * meshSizeY);
     }
 
     public int getMeshSizeX() {
@@ -216,7 +252,9 @@ public class DataManager {
         System.out.println(
                 "Id: " + cellMatrix[x][y].getId() + "\n" +
                 "Color: " + cellMatrix[x][y].getColor().getRGB() + "\n" +
-                "Energy: " + cellMatrix[x][y].getEnergy() + "\n"
+                "Energy: " + cellMatrix[x][y].getEnergy() + "\n" +
+                "Dislocation: " + cellMatrix[x][y].getDislocation() + "\n" +
+                "Recrystallized: " + cellMatrix[x][y].isRecrystallized + "\n"
         );
     }
 
@@ -461,6 +499,174 @@ public class DataManager {
         }
 
         cellMatrix[p.x][p.y].setEnergy(energy);
+
+    }
+
+    /* = = = = = = = = = = = RECRYSTALIZATION METHODS = = = = = = = = = = = */
+
+
+    private void calcDislocationPool(double currentStep) {
+        currPool = (parA / parB) + (1 - (parA/parB)) * Math.exp(-parB * currentStep);
+
+        listOfDislocationPool.add(currPool);
+
+        deltaPool = currPool - prevPool;
+        prevPool = currPool;
+
+        averagePoolPerCell = deltaPool / (meshSizeX * meshSizeY);
+
+    }
+
+    private void setDislocationEveryCell(double dislocation) {
+
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
+                if (cellMatrix[i][j].isRecrystallized)
+                    continue;
+                cellMatrix[i][j].dislocation += dislocation;
+                if (cellMatrix[i][j].dislocation > criticalValue && cellMatrix[i][j].getEnergy() > 0) {
+                    cellMatrix[i][j].recrystallization();
+                    recrystallizedInCurrentStep.add(new Point(i, j));
+                }
+            }
+    }
+
+    private void dislocationGiveaway(double restPool) {
+
+        double packageD = restPool * (packageSize/100);
+
+        while (restPool > 0) {
+            int randomX = ThreadLocalRandom.current().nextInt(0, meshSizeX-1);
+            int randomY = ThreadLocalRandom.current().nextInt(0, meshSizeY-1);
+
+            if (cellMatrix[randomX][randomY].isRecrystallized)
+                continue;
+
+           // Point testPoint = new Point(randomX, randomY);
+            //pointEnergy(testPoint);
+            double draw = r.nextDouble();
+
+            if (cellMatrix[randomX][randomY].getEnergy() == 0 && draw < (1 - (propability / 100))) {
+                cellMatrix[randomX][randomY].dislocation += packageD;
+               /* if (cellMatrix[randomX][randomY].dislocation > criticalValue) {
+                    cellMatrix[randomX][randomY].recrystallization();
+                    recrystallizedInCurrentStep.add(testPoint);
+                }*/
+                restPool -= packageD;
+            }
+            else if (cellMatrix[randomX][randomY].getEnergy() > 0 && draw < (propability / 100)) {
+                    cellMatrix[randomX][randomY].dislocation += packageD;
+                   /* if (cellMatrix[randomX][randomY].dislocation > criticalValue) {
+                        cellMatrix[randomX][randomY].recrystallization();
+                        recrystallizedInCurrentStep.add(testPoint);
+                    }*/
+                restPool -= packageD;
+            }
+        }
+    }
+
+    private void nucletaion() {
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
+                if (cellMatrix[i][j].dislocation > criticalValue && cellMatrix[i][j].getEnergy() > 0) {
+                    cellMatrix[i][j].recrystallization();
+                    recrystallizedInCurrentStep.add(new Point(i, j));
+                }
+        }
+    }
+
+    private boolean checkNeighborsDislocation(int i, int j) {
+        double myValue = cellMatrix[i][j].getDislocation();
+        List<Cell> neighbors = new ArrayList<>();
+        for (int m = -1; m <= 1; m++) {
+            for (int n = -1; n <= 1; n++) {
+
+                int x = i + m;
+                int y = j + n;
+
+                if (m + 1 > neighborhoodMatrix.length-1 || n + 1 > neighborhoodMatrix.length-1)
+                    continue;
+                if (neighborhoodMatrix[m+1][n+1] == 0)
+                    continue;
+
+                if (x == i && y == j)
+                    continue;
+                /* BOUNDARY CONDITIONS */
+                if (selectedBCs == BCs.PERIODIC) {
+                    if (x < 0)
+                        x += meshSizeX;
+                    if (y < 0)
+                        y += meshSizeY;
+                    if (x > meshSizeX - 1)
+                        x -= meshSizeX;
+                    if (y > meshSizeY - 1)
+                        y -= meshSizeY;
+                } else {
+                    if (x < 0 || y < 0 || x > meshSizeX - 1 || y > meshSizeY - 1)
+                        continue;
+                }
+
+                neighbors.add(cellMatrix[x][y]);
+            }
+        }
+
+        int trues = 0;
+
+        for (Cell c : neighbors) {
+            if (c.getDislocation() < myValue)
+                trues++;
+        }
+
+        return trues == 4;
+
+    }
+
+
+    private void transitionRules() {
+
+        for (int i = 0; i < meshSizeX; i++)
+            for (int j = 0; j < meshSizeY; j++) {
+                for (Point p : recrystallizedInPreviousStep) {
+                    if ((p.x == i-1 && p.y == j) || (p.x == i+1 && p.y == j) || (p.x == i && p.y == j-1) || (p.x == i && p.y == j+1)) {
+                        if(checkNeighborsDislocation(i, j))
+                            cellMatrix[i][j].copyData(cellMatrix[p.x][p.y]);
+                    }
+                }
+            }
+    }
+
+    public void recrystallization() throws InterruptedException {
+
+        neighborhoodType = Neighborhoods.VonNeumann;
+        for (double currentStep = 0.0; currentStep < timeLimit + timeStep; currentStep += timeStep) {
+
+            listOfSteps.add(currentStep);
+            /* calculate dislocation pool */
+            if (currentStep != 0.0)
+                calcDislocationPool(currentStep);
+            else
+                listOfDislocationPool.add(currPool);
+
+            /* dislocation for every pool and rest pool giveaway */
+            double dislocationPoolForEveryCell = averagePoolPerCell * (dislDiv / 100);
+
+            setDislocationEveryCell(dislocationPoolForEveryCell);
+
+            double restDislocationPool = averagePoolPerCell * (1 - (dislDiv/100));
+            dislocationGiveaway(restDislocationPool);
+
+            /* DRX Nucleation */
+            nucletaion();
+
+            /* DRX Transition */
+            if (recrystallizedInPreviousStep.size() > 0)
+                transitionRules();
+
+            /* Swap crystal lists */
+            recrystallizedInPreviousStep = recrystallizedInCurrentStep;
+            recrystallizedInCurrentStep.clear();
+
+        }
 
     }
 

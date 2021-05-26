@@ -10,10 +10,12 @@ import MW.data.JCanvasPanel;
 import MW.elements.*;
 import MW.elements.Button;
 import MW.elements.Label;
+import MW.elements.TextField;
 import MW.enums.BCs;
 import MW.enums.Neighborhoods;
 import MW.enums.Nucleations;
 import MW.tools.PatternTXT;
+import org.w3c.dom.Text;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,15 +75,15 @@ public class Main extends JFrame {
 
     public void program(){
 
-        buttonPanelRight.setLayout(new GridLayout(14, 2));
+        buttonPanelRight.setLayout(new GridLayout(22, 2));
         buttonPanelLeft.setLayout(new GridLayout(1, 14));
 
         // ================= Window Size ==================
 
         Label meshLabel1 = new Label("Długość okna", buttonPanelRight);
-        ComboNum meshSizeX = new ComboNum(1, 1000, buttonPanelRight);
+        ComboNum meshSizeX = new ComboNum(1, 600, buttonPanelRight);
         Label meshLabel2 = new Label("Wysokość okna", buttonPanelRight);
-        ComboNum meshSizeY = new ComboNum(1, 1000, buttonPanelRight);
+        ComboNum meshSizeY = new ComboNum(1, 600, buttonPanelRight);
 
         // ================= Boundary Conditions ==================
 
@@ -153,30 +155,6 @@ public class Main extends JFrame {
             isBoardCreated.set(true);
             // REPAINT
             canvasPanel.repaint();
-        });
-
-        // ================= Files Options ==================
-
-        Button saveButton = new MW.elements.Button("Zapisz do pliku", buttonPanelRight);
-        saveButton.button.addActionListener(e -> {
-            if (isBoardCreated.get())
-                PatternTXT.savePattern(canvasPanel.dataManager);
-        });
-
-        MW.elements.Button openButton = new MW.elements.Button("Wczytaj z pliku", buttonPanelRight);
-        JFileChooser pattern = new JFileChooser(new File("src/main/resources/patterns/"));
-
-        openButton.button.addActionListener(e -> {
-            int result = pattern.showOpenDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = pattern.getSelectedFile();
-                String patternPath = selectedFile.getAbsolutePath();
-                try {
-                    canvasPanel.dataManager.setMatrix(PatternTXT.openPattern(patternPath));
-                } catch (FileNotFoundException fileNotFoundException) {
-                    fileNotFoundException.printStackTrace();
-                }
-            }
         });
 
         // ================= Simulation ==================
@@ -261,8 +239,14 @@ public class Main extends JFrame {
                 canvasPanel.dataManager.setMonteCarlo((Double)monteKtNumber.comboBox.getSelectedItem(), (Integer)monteIterationsNumber.comboBox.getSelectedItem())
         );
 
-        monteMapButton.button.addActionListener(e -> canvasPanel.energyMap = true);
-        monteStructureButton.button.addActionListener(e -> canvasPanel.energyMap = false);
+        monteMapButton.button.addActionListener(e -> {
+            canvasPanel.crystallMap = false;
+            canvasPanel.energyMap = true;
+        });
+        monteStructureButton.button.addActionListener(e -> {
+            canvasPanel.energyMap = false;
+            canvasPanel.crystallMap = false;
+        });
 
         // ================= Monte Carlo Simulation ==================
 
@@ -297,6 +281,65 @@ public class Main extends JFrame {
             MC.get().interrupt();
             isWorking.set(false);
         });
+
+        // ================= Recrystallization ==================
+        Label parameterALabel = new Label("Wartość A:", buttonPanelRight);
+        TextField parameterA = new TextField(86710969050178.5,0.0, Double.MAX_VALUE, buttonPanelRight);
+        Label parameterBLabel = new Label("Wartość B:", buttonPanelRight);
+        TextField parameterB = new TextField(9.41268203527779, 0.0, Double.MAX_VALUE, buttonPanelRight);
+        Label dislDivLabel = new Label("Podział dyslokacji [%]:", buttonPanelRight);
+        TextField dislDiv = new TextField(55.0, 0.0, 100.0, buttonPanelRight);
+        Label timeStepLabel = new Label("Krok czasowy:", buttonPanelRight);
+        TextField timeStep = new TextField(0.001, 0.0, Double.MAX_VALUE, buttonPanelRight);
+        Label packageSizeLabel = new Label("Część paczki [%]:", buttonPanelRight);
+        TextField packageSize = new TextField(0.1, 0.0, 100.0, buttonPanelRight);
+        Label propabilityLabel = new Label("Szansa na otrz. paczki [%]:", buttonPanelRight);
+        TextField propability = new TextField(80.0, 0.0, 100.0, buttonPanelRight);
+        Label timeLimitLabel = new Label("Limit czasowy:", buttonPanelRight);
+        TextField timeLimit = new TextField(0.2, 0.0, Double.MAX_VALUE, buttonPanelRight);
+        Button updateData = new Button("Ustaw dane", buttonPanelRight);
+        Button startRecrystallization = new Button("Start", buttonPanelRight);
+        Button densityMap = new Button("Mapa dyslokacji", buttonPanelRight);
+
+        densityMap.button.addActionListener(e -> {
+            canvasPanel.energyMap = false;
+            canvasPanel.crystallMap = true;
+        });
+
+        updateData.button.addActionListener(e -> {
+            canvasPanel.dataManager.setRecrystallization((Double)parameterA.textField.getValue(), (Double)parameterB.textField.getValue(),
+                    (Double)dislDiv.textField.getValue(), (Double)timeStep.textField.getValue(), (Double)packageSize.textField.getValue(),
+                    (Double)propability.textField.getValue(), (Double)timeLimit.textField.getValue());
+        });
+
+        // ================= Files Options ==================
+
+        Button saveButton = new MW.elements.Button("Zapisz do pliku", buttonPanelRight);
+        saveButton.button.addActionListener(e -> {
+            if (isBoardCreated.get())
+                PatternTXT.savePattern(canvasPanel.dataManager);
+        });
+
+        // ================= Recrystallization Simulation ==================
+
+        // Lambda Runnable
+        Runnable crystallTask = () -> {
+            try {
+                canvasPanel.dataManager.setRecrystallization((Double)parameterA.textField.getValue(), (Double)parameterB.textField.getValue(),
+                        (Double)dislDiv.textField.getValue(), (Double)timeStep.textField.getValue(), (Double)packageSize.textField.getValue(),
+                        (Double)propability.textField.getValue(), (Double)timeLimit.textField.getValue());
+                canvasPanel.dataManager.recrystallization();
+                JOptionPane optionPane = new JOptionPane("Rekrystalizacja zakończona", JOptionPane.INFORMATION_MESSAGE);
+                JDialog dialog = optionPane.createDialog("Rekrystalizacja");
+                dialog.setAlwaysOnTop(true);
+                dialog.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        };
+
+        startRecrystallization.button.addActionListener(e -> new Thread(crystallTask).start());
+
 
     }
 }

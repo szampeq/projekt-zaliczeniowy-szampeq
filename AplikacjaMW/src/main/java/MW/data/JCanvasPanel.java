@@ -10,6 +10,7 @@ public class JCanvasPanel extends JPanel {
 
     public DataManager dataManager;
     public boolean energyMap = false;
+    public boolean crystallMap = false;
 
     public JCanvasPanel(DataManager dataManager){
         this.dataManager = dataManager;
@@ -25,9 +26,9 @@ public class JCanvasPanel extends JPanel {
 
         for (int j = 0; j < MSY; j++) {
             for (int i = 0; i < MSX; i++) {
-                if (!energyMap)
+                if (!energyMap && !crystallMap)
                     g2.setColor(dataManager.cellMatrix[i][j].getColor());
-                else {
+                else if (energyMap) {
                     if (dataManager.cellMatrix[i][j].getEnergy() == 0)
                         g2.setColor(Color.ORANGE);
                     else {
@@ -41,6 +42,12 @@ public class JCanvasPanel extends JPanel {
                         Color dark = new Color(value, value, value);
                         g2.setColor(dark);
                     }
+                }
+                else {
+                    if (dataManager.cellMatrix[i][j].isRecrystallized)
+                        g2.setColor(dataManager.cellMatrix[i][j].getColor());
+                    else
+                        g2.setColor(Color.WHITE);
                 }
                 g2.fillRect(i * CS + CS, j * CS + CS, CS, CS);
             }

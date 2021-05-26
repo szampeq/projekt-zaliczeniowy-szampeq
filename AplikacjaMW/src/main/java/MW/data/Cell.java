@@ -10,12 +10,15 @@ public class Cell {
     boolean isActive;
     Color color;
     int energy = 0;
+    double dislocation = 0;
+    boolean isRecrystallized;
     final static Random r = new Random();
 
     Cell(boolean isActive, Color color, Point coords) {
         this.isActive = isActive;
         this.color = color;
         this.coords = coords;
+        this.isRecrystallized = false;
     }
 
     public boolean isActive() {
@@ -58,12 +61,26 @@ public class Cell {
         this.energy = energy;
     }
 
+    public double getDislocation() {
+        return dislocation;
+    }
+
+    public void setDislocation(double dislocation) {
+        this.dislocation = dislocation;
+    }
+
     public void born() {
         this.setId();
         isActive = true;
-        color = new Color(r.nextInt(256),r.nextInt(256),r.nextInt(256),r.nextInt(256));
+        color = new Color(128 + r.nextInt(128),128+ r.nextInt(128),128 + r.nextInt(128));
     }
 
+    public void recrystallization() {
+        this.setId();
+        this.dislocation = 0;
+        this.isRecrystallized = true;
+        color = new Color(r.nextInt(128),r.nextInt(128),r.nextInt(128));
+    }
     public static void resetNumber() {
         number = 1;
     }
@@ -73,5 +90,6 @@ public class Cell {
         this.color = source.color;
         this.isActive = source.isActive;
         this.energy = source.energy;
+        this.isRecrystallized = source.isRecrystallized;
     }
 }
